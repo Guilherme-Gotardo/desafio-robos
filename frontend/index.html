@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Central de Robôs</title>
+</head>
+
+<body>
+    <h1>Central de Robôs 🤖</h1>
+
+    <div>
+        <h2>Novo Robô</h2>
+        <input type="text" id="nome" placeholder="Nome" />
+        <input type="text" id="modelo" placeholder="Modelo" />
+        <select id="tipo">
+            <option value="assistente">Assistente</option>
+            <option value="combatente">Combatente</option>
+        </select>
+        <button onclick="criarRobo()">Criar</button>
+    </div>
+
+    <h2>Lista de Robôs</h2>
+    <div id="robos"></div>
+</body>
+
+</html>
+
+<script>
+    const API = "http://localhost:8080";
+    async function listarRobos() {
+        const res = await fetch(`${API}/robos`);
+        const robos = await res.json();
+        const div = document.getElementById("robos");
+        div.innerHTML = "";
+
+        robos.forEach(r => {
+            const bloco = document.createElement("div");
+            bloco.className = "robo";
+            bloco.innerHTML = `
+      <strong>${r.nome}</strong> (${r.modelo})<br/>
+      <button onclick="executarAcao(${r.id})">Executar Ação</button>
+      <button onclick="deletar(${r.id})">Excluir</button>
+      <p id="acao-${r.id}"></p>
+    `;
+            div.appendChild(bloco);
+        });
+    }
+
+    async function criarRobo() {
+        const nome = document.getElementById("nome").value;
+        const modelo = document.getElementById("modelo").value;
+        const tipo = document.getElementById("tipo").value;
+
+        await fetch(`${API}/robos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nome, modelo, tipo })
+        });
+
+        listarRobos();
+    }
+
+    async function executarAcao(id) {
+        const res = await fetch(`${API}/robos/${id}/acao`);
+        const txt = await res.text();
+        document.getElementById(`acao-${id}`).innerText = txt;
+    }
+
+    async function deletar(id) {
+        await fetch(`${API}/robos/${id}`, { method: "DELETE" });
+        listarRobos();
+    }
+
+    listarRobos();
+</script>
